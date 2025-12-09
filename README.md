@@ -2,6 +2,9 @@
 
 Extra formulae for the Homebrew package manager.
 
+## Available formulae
+- cd-discid
+
 ## How do I install these formulae?
 
 `brew install tiesjan/extra/<formula>`
