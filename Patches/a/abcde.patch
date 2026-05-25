@@ -1,0 +1,78 @@
+diff --git a/abcde b/abcde
+index 61112fc..3029474 100755
+--- a/abcde
++++ b/abcde
+@@ -2099,7 +2099,12 @@ do_discid ()
+ 					exit 1
+ 				fi
+ 				;;
+-			cdparanoia|debug)
++			cdparanoia|libcdio|debug)
++				if [ "$OSFLAVOUR" = "OSX" ] ; then
++					# Hei, we have to unmount the device before running any CDROMREADER command
++					diskutil unmount "${CDROM#/dev/}"
++				fi
++
+ 				CDPARANOIAOUTPUT="$( $CDROMREADER -"$CDPARANOIACDROMBUS" "$CDROM" -Q --verbose 2>&1 )"
+ 				RET=$?
+ 				if [ ! "$RET" = "0" ];then
+@@ -2175,6 +2180,10 @@ do_discid ()
+ 			case "$CDROMREADERSYNTAX" in
+ 				cdparanoia|libcdio|debug)
+ 					if [ "$WEHAVEACD" = "y" ]; then
++						if [ "$OSFLAVOUR" = "OSX" ] ; then
++							# Hei, we have to unmount the device before running any CDROMREADER command
++							diskutil unmount "${CDROM#/dev/}"
++						fi
+ 						vecho "Querying the CD for audio tracks..."
+ 						CDPARANOIAOUTPUT="$( $CDROMREADER -"$CDPARANOIACDROMBUS" "$CDROM" -Q --verbose 2>&1 )"
+ 						RET=$?
+@@ -2600,7 +2609,7 @@ do_cdtext_read ()
+ 		mkdir -p "${SOURCE_WORKDIR}"
+ 
+ 		if [ "$OSFLAVOUR" = "OSX" ] ; then
+-			# Hei, we have to unmount the device before running anything like cdda2wav/icedax in OSX
++			# Hei, we have to unmount the device before running any CDROMREADER command
+ 			diskutil unmount "${CDROM#/dev/}"
+ 			# Also, in OSX the cdrom device for cdda2wav/icedax changes...
+ 			CDDA2WAVCDROM="IODVDServices"
+@@ -3557,6 +3566,12 @@ do_cdread ()
+ 			echo "Grabbing ${PIPE_MESSAGE}track $UTRACKNUM..." >&2
+ 		fi
+ 	fi
++
++	if [ "$OSFLAVOUR" = "OSX" ] ; then
++		# Hei, we have to unmount the device before running any CDROMREADER command
++		diskutil unmount "${CDROM#/dev/}"
++	fi
++
+ 	case "$CDROMREADERSYNTAX" in
+ 		### FIXME ### use an exception for flac, since it uses -o
+ 		### FIXME ### Shall we just use -o $FILEARG ??
+@@ -3573,8 +3588,6 @@ do_cdread ()
+ 			 ;;
+ 		cdda2wav|icedax)
+ 			if [ "$OSFLAVOUR" = "OSX" ] ; then
+-				# Hei, we have to unmount the device before running anything like cdda2wav/icedax in OSX
+-				diskutil unmount "${CDROM#/dev/}"
+ 				# Also, in OSX the cdrom device for cdda2wav/icedax changes...
+ 				CDDA2WAVCDROM="IODVDServices"
+ 			elif [ "$OSFLAVOUR" = "FBSD" ] || [ "$OSFLAVOUR" = "IRIX" ]; then
+@@ -4035,7 +4048,7 @@ elif [ X"$UNAME" = "XDarwin" ] ; then
+ 	OSFLAVOUR=OSX
+ 	# We should have diskutil in OSX, but let's be sure...
+ 	NEEDDISKUTIL=y
+-	CDROMREADERSYNTAX=cddafs
++	CDROMREADERSYNTAX=libcdio
+ 	# We won't find the eject program in OSX, and doing checkexec will fail further below...
+ 	unset EJECT
+ elif [ X"$UNAME" = "XOpenBSD" ] ; then
+@@ -5332,7 +5345,7 @@ if [ "$EJECTCD" = "y" ]; then
+ 		cd="$(echo "$CDROM" | sed -e 's=.*/==;s=[a-h]$==;')"
+ 		$eject $EJECTOPTS $cd
+ 	elif [ X"$UNAME" = X"Darwin" ] ; then
+-		diskutil eject "${CDROM#/dev/}" 0
++		diskutil eject "${CDROM#/dev/}"
+ 	elif [ -x "$(which "$EJECT")" ]; then
+ 		$EJECT $EJECTOPTS "$CDROM"
+ 	fi
